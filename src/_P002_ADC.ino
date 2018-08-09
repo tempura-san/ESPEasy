@@ -49,7 +49,7 @@ boolean Plugin_002(byte function, struct EventStruct *event, String& string)
     case PLUGIN_WEBFORM_LOAD:
       {
         #if defined(ESP32)
-          addHtml(F("<TR><TD>Analog Pin:<TD>"));
+          addRowLabel(F("Analog Pin"));
           addPinSelect(false, "taskdevicepin1", Settings.TaskDevicePin1[event->TaskIndex]);
         #endif
 
@@ -66,6 +66,11 @@ boolean Plugin_002(byte function, struct EventStruct *event, String& string)
         addFormNumericBox(F("Point 2"), F("plugin_002_adc2"), Settings.TaskDevicePluginConfigLong[event->TaskIndex][1], 0, 1023);
         addHtml(F(" &#8793; "));
         addTextBox(F("plugin_002_out2"), String(Settings.TaskDevicePluginConfigFloat[event->TaskIndex][1], 3), 10);
+
+        // see https://jeelabs.org/2013/05/18/zero-power-measurement-part-2/
+        addFormSubHeader(F("Zero-Power measurement"));
+        addRowLabel(F("Charge pin"));
+        addPinSelect(false, "taskdevicepin2", Settings.TaskDevicePin2[event->TaskIndex]);
 
         success = true;
         break;
@@ -85,6 +90,16 @@ boolean Plugin_002(byte function, struct EventStruct *event, String& string)
 
         success = true;
         break;
+      }
+
+    case PLUGIN_INIT:
+      {
+          if (Settings.TaskDevicePin2[event->TaskIndex] != -1) {
+            pinMode(Settings.TaskDevicePin2[event->TaskIndex], OUTPUT);
+            digitalWrite(Settings.TaskDevicePin2[event->TaskIndex], HIGH);
+          }
+          success = true;
+          break;
       }
 
     case PLUGIN_TEN_PER_SECOND:
@@ -117,6 +132,11 @@ boolean Plugin_002(byte function, struct EventStruct *event, String& string)
         }
         else
         {
+          // ZPM: discharge capacitor and perform measurement
+          if (Settings.TaskDevicePin2[event->TaskIndex] != -1) {
+            log += F("[ZPM] ");
+            digitalWrite(Settings.TaskDevicePin2[event->TaskIndex], LOW);
+          }
           #if defined(ESP8266)
             int16_t value = analogRead(A0);
           #endif
@@ -124,6 +144,10 @@ boolean Plugin_002(byte function, struct EventStruct *event, String& string)
             int16_t value = analogRead(Settings.TaskDevicePin1[event->TaskIndex]);
           #endif
           UserVar[event->BaseVarIndex] = (float)value;
+          // ZPM: charge capacitor to be ready for next measurement
+          if (Settings.TaskDevicePin2[event->TaskIndex] != -1) {
+            digitalWrite(Settings.TaskDevicePin2[event->TaskIndex], HIGH);
+          }
 
           log += value;
         }
