@@ -35,4 +35,11 @@ String Command_System_Restart(struct EventStruct *event, const char* Line)
 	return return_command_success();
 }
 
+String Command_System_Update(struct EventStruct *event, const char* Line) {
+	if(HttpUpdateCheck())
+		return return_command_success();
+	else
+		return return_command_failed();
+}
+
 #endif // COMMAND_SYSTEM_H

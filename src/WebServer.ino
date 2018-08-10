@@ -3814,6 +3814,7 @@ void handle_advanced() {
   String ip = WebServer.arg(F("ip"));
   String syslogip = WebServer.arg(F("syslogip"));
   String ntphost = WebServer.arg(F("ntphost"));
+  String httpupdatehost = WebServer.arg(F("httpupdatehost"));
   int timezone = getFormItemInt(F("timezone"));
   int dststartweek = getFormItemInt(F("dststartweek"));
   int dststartdow = getFormItemInt(F("dststartdow"));
@@ -3862,9 +3863,20 @@ void handle_advanced() {
     Settings.Latitude = getFormItemFloat(F("latitude"));
     Settings.Longitude = getFormItemFloat(F("longitude"));
 
+    Settings.HttpUpdateEnabled = isFormItemChecked(F("usehttpupdate"));
+    httpupdatehost.toCharArray(tmpString, 64);
+    strcpy(Settings.HttpUpdateHost, tmpString);
+    Settings.HttpUpdatePort = getFormItemInt(F("httpupdateport"));
+    Settings.HttpUpdateInterval = getFormItemInt(F("httpupdateintv"));
+
     addHtmlError(SaveSettings());
     if (Settings.UseNTP)
       initTime();
+
+    if (Settings.HttpUpdateEnabled) {
+      HttpUpdateCheck();
+      timerHttpUpdateCheck = Settings.HttpUpdateInterval * 2; // min -> 1/2min
+    }
   }
 
   // char str[20];
@@ -3945,6 +3957,13 @@ void handle_advanced() {
   #if defined(ESP32)
     addFormCheckBox(F("Enable RTOS Multitasking"), F("usertosmultitasking"), Settings.UseRTOSMultitasking);
   #endif
+
+  addFormSubHeader(F("HTTP Update Settings"));
+
+  addFormCheckBox(F("Enable HTTP Update"), F("usehttpupdate"), Settings.HttpUpdateEnabled);
+  addFormTextBox(F("Hostname"), F("httpupdatehost"), Settings.HttpUpdateHost, 64);
+  addFormNumericBox(F("Server port"), F("httpupdateport"), Settings.HttpUpdatePort, 0, 65535);
+  addFormNumericBox(F("Check interval [minutes]"), F("httpupdateintv"), Settings.HttpUpdateInterval, 0, 65535);
 
   addFormSeparator(2);
 

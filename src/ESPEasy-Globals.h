@@ -786,6 +786,11 @@ struct SettingsStruct
   float         Latitude;
   float         Longitude;
 
+  boolean       HttpUpdateEnabled;
+  char          HttpUpdateHost[65];
+  uint16_t      HttpUpdatePort;
+  uint32_t      HttpUpdateInterval;
+
   // FIXME @TD-er: As discussed in #1292, the CRC for the settings is now disabled.
   // make sure crc is the last value in the struct
   // Try to extend settings to make the checksum 4-byte aligned.
@@ -1314,6 +1319,7 @@ unsigned long connectionFailures;
 unsigned long wdcounter = 0;
 unsigned long timerAPoff = 0;
 unsigned long timerAwakeFromDeepSleep = 0;
+unsigned long timerHttpUpdateCheck = 0;
 
 #if FEATURE_ADC_VCC
 float vcc = -1.0;

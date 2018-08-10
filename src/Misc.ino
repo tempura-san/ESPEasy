@@ -1,11 +1,13 @@
+#if defined(ESP8266)
+  #include <md5.h>
+  #include <ESP8266httpUpdate.h>
+#endif
+
 // clean up tcp connections that are in TIME_WAIT status, to conserve memory
 // In future versions of WiFiClient it should be possible to call abort(), but
 // this feature is not in all upstream versions yet.
 // See https://github.com/esp8266/Arduino/issues/1923
 // and https://github.com/letscontrolit/ESPEasy/issues/253
-#if defined(ESP8266)
-  #include <md5.h>
-#endif
 #if defined(ESP8266)
 
 struct tcp_pcb;
@@ -2954,6 +2956,61 @@ void ArduinoOTAInit()
 }
 
 #endif
+
+boolean HttpUpdateCheck() {
+	String log;
+
+  if(Settings.HttpUpdateEnabled == false ||
+		strlen(Settings.HttpUpdateHost) == 0 ||
+		Settings.HttpUpdatePort == 0) {
+		  addLog(LOG_LEVEL_ERROR, F("UPDT : HTTP update not configured."));
+		  return false;
+	}
+
+	if (!WiFiConnected(100)) {
+		addLog(LOG_LEVEL_ERROR, F("UPDT : HTTP update needs WiFi connection."));
+		return false;
+	}
+
+#if defined(ESP8266)
+	log = F("UPDT : HTTP update check running... ");
+
+  t_httpUpdate_return ret;
+	ret = ESPhttpUpdate.update(
+        	Settings.HttpUpdateHost,
+          Settings.HttpUpdatePort,
+          "/update"
+          // FIXME no version sent currently - use MD5 of sketch
+        );
+
+	switch(ret) {
+    case HTTP_UPDATE_FAILED:
+      log += F("failed - reason: ");
+      log += ESPhttpUpdate.getLastErrorString();
+			addLog(LOG_LEVEL_ERROR, log);
+			return false;
+    case HTTP_UPDATE_NO_UPDATES:
+      log += F("firmware is up-to-date.");
+			addLog(LOG_LEVEL_INFO, log);
+      break;
+    case HTTP_UPDATE_OK:
+      // may not be shown
+      // the updater reboots the ESP8266 after finishing
+      log += F("updating");
+      addLog(LOG_LEVEL_INFO, log);
+      break;
+	  default:
+		  log += F("failed - unknown return code.");
+			addLog(LOG_LEVEL_ERROR, log);
+			return false;
+  }
+
+	return true;
+#else
+  addLog(LOG_LEVEL_ERROR, F("UPDT : HTTP update not supported for this chip (ESP8266 only)."))
+  return false;
+#endif
+}
 
 int calc_CRC16(const String& text) {
   return calc_CRC16(text.c_str(), text.length());

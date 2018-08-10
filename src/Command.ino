@@ -73,6 +73,10 @@ String doExecuteCommand(const char * cmd, struct EventStruct *event, const char*
 	  COMMAND_CASE("gateway"                , Command_Gateway);                    // Network Command
       break;
     }
+    case 'h': {
+    COMMAND_CASE("httpupdate"               , Command_System_Update);              // System.h
+      break;
+    }
     case 'i': {
 	  COMMAND_CASE("i2cscanner"             , Command_i2c_Scanner);                // i2c.h
 	  COMMAND_CASE("ip"                     , Command_IP);                         // Network Command

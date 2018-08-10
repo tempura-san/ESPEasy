@@ -143,6 +143,11 @@ void processGotIP() {
     wifiSetup = false;
     SaveSettings();
   }
+  // perform update check if configured - must be done after WiFi status is
+  // set to ESPEASY_WIFI_SERVICES_INITIALIZED
+  if (Settings.HttpUpdateEnabled) {
+    HttpUpdateCheck();
+  }
   logConnectionStatus();
 }
 

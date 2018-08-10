@@ -724,6 +724,21 @@ void runEach30Seconds()
   ReportStatus();
   #endif
 
+  if(Settings.HttpUpdateEnabled && Settings.HttpUpdateInterval != 0) {
+    if((timerHttpUpdateCheck == 0) || (--timerHttpUpdateCheck == 0)) {
+      // timer elapsed (or initial call), perform firmware check and re-arm
+      HttpUpdateCheck();
+      // double the value to convert from minutes to half-minute intervals
+      timerHttpUpdateCheck = Settings.HttpUpdateInterval * 2;
+    }
+    else {
+      // timer still running
+    }
+  }
+  else {
+    // disabled
+    timerHttpUpdateCheck = 0;
+  }
 }
 
 
